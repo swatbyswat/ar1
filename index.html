@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AR.js Project</title>
+  <script src="https://cdn.jsdelivr.net/npm/ar.js"></script>
+</head>
+<body>
+  <div id="arSceneContainer"></div>
+
+  <!-- Add frontend interface elements -->
+  <div class="interface">
+    <h2>AR.js Interface</h2>
+    <button id="openCameraButton">Open Camera</button>
+  </div>
+
+  <script>
+    // Set up the AR scene
+    const scene = new THREE.Scene();
+    const camera = new THREE.Camera();
+    scene.add(camera);
+
+    // Create the ARToolkitContext
+    const ARToolkitContext = new THREEx.ArToolkitContext({
+      detectionMode: "mono",
+    });
+
+    // Create the marker controls
+    const markerControls = new THREEx.ArMarkerControls(
+      ARToolkitContext, camera, {
+        type: "pattern",
+        patternUrl: "marker.patt",
+        changeMatrixMode: "cameraTransformMatrix",
+      }
+    );
+
+    // Load and add the frame model
+    const frameLoader = new THREE.GLTFLoader();
+    frameLoader.load("frameModel.gltf", (gltf) => {
+      const frameModel = gltf.scene;
+      scene.add(frameModel);
+
+      // Add a custom 3D object to the scene
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      const cube = new THREE.Mesh(geometry, material);
+      cube.position.set(0, 0, -1); // Adjust the position as needed
+      frameModel.add(cube);
+    });
+
+    // Set up the renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById("arSceneContainer").appendChild(renderer.domElement);
+
+    // Render the scene
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Function to open camera and scan marker
+    function openCamera() {
+      // Request user interaction before playing video
+      const playPromise = document.querySelector("video").play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            // Hide the interface elements
+            document.querySelector(".interface").style.display = "none";
+
+            // Start AR scene
+            ARToolkitContext.arController.initVideo(document.querySelector("video"));
+            ARToolkitContext.arController.start();
+          })
+          .catch((error) => {
+            console.error("Error playing video:", error);
+          });
+      }
+    }
+
+    // Add event listener
+    document.getElementById("openCameraButton").addEventListener("click", openCamera);
+  </script>
+</body>
+</html>
