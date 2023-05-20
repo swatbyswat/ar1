@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AR.js Project</title>
+  <script src="https://cdn.jsdelivr.net/npm/ar.js"></script>
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+</head>
+<body>
+  <div id="arSceneContainer"></div>
+
+  <!-- Add frontend interface elements -->
+  <div class="interface">
+    <h2>AR.js Interface</h2>
+    <button id="openCameraButton">Open Camera</button>
+  </div>
+
+  <script>
+    
+    const scene = new THREE.Scene();
+    const camera = new THREE.Camera();
+    scene.add(camera);
+
+    
+    const ARToolkitContext = new THREEx.ArToolkitContext({
+      detectionMode: "mono",
+    });
+
+    // Create the marker controls
+    const markerControls = new THREEx.ArMarkerControls(
+      ARToolkitContext, camera, {
+        type: "pattern",
+        patternUrl: "marker.patt",
+        changeMatrixMode: "cameraTransformMatrix",
+      }
+    );
+
+    
+    const frameLoader = new THREE.GLTFLoader();
+    frameLoader.load("frameModel.gltf", (gltf) => {
+      const frameModel = gltf.scene;
+      scene.add(frameModel);
+
+      
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      const cube = new THREE.Mesh(geometry, material);
+      cube.position.set(0, 0, -1); // Adjust the position as needed
+      frameModel.add(cube);
+    });
+
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById("arSceneContainer").appendChild(renderer.domElement);
+
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    
+    function openCamera() {
+      
+      const playPromise = document.querySelector("video").play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+        
+            document.querySelector(".interface").style.display = "none";
+
+           
+            ARToolkitContext.arController.initVideo(document.querySelector("video"));
+            ARToolkitContext.arController.start();
+          })
+          .catch((error) => {
+            console.error("Error playing video:", error);
+          });
+      }
+    }
+
+    
+    document.getElementById("openCameraButton").addEventListener("click", openCamera);
+  </script>
+</body>
+</html>
